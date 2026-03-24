@@ -45,7 +45,76 @@ void build_args(operator_t *op, char **args) {
     args[i++] = NULL;
 }
 
+void write_spec(merger_node_t *node, int fd) {
+    dprintf(fd, "%d\n", node->num_chains);
+    for(int i = 0; i < node->num_chains; i++) {
+        operator_chain_t *chain = &node->chains[i]; 
+        if (chain->merger_child != NULL) {
+            dprintf(fd, "%d %d merger\n", chain->start_line, chain->end_line);
+            write_spec(chain->merger_child, fd);
+        } else {
+            dprintf(fd, "%d %d", chain->start_line, chain->end_line);
+            for(int j = 0; j < chain->num_ops; j++) {
+                char *args[16];
+                build_args(&chain->ops[j], args);
+                for (int k = 0; args[k] != NULL; k++) {
+                    dprintf(fd, " %s", args[k]);
+                }
+                if (j < chain->num_ops - 1) {
+                    dprintf(fd, " |");
+                }
+                dprintf(fd, "\n");
+            }
+        }
+    }
+}
+
 void run_chain(operator_chain_t *chain, char **csv_lines, int num_lines, pid_t *exit_pids, int *exit_statuses, int *exit_count) {
+    if (chain->merger_child != NULL) {
+        int pipe_to_sub[2];
+        int pipe_from_sub[2];
+
+        PIPE(pipe_to_sub);
+        PIPE(pipe_from_sub);
+
+        pid_t child = fork();
+
+        if(child == 0) {
+            dup2(pipe_to_sub[0], STDIN_FILENO);
+            dup2(pipe_from_sub[1], STDOUT_FILENO);
+
+            close(pipe_to_sub[0]);
+            close(pipe_to_sub[1]);
+            close(pipe_from_sub[0]);
+            close(pipe_from_sub[1]);
+
+            char *args[] = {"merger", NULL};
+            execvp("merger", args);
+            exit(1);
+        }
+
+        write_spec(chain->merger_child, pipe_to_sub[1]);
+
+        for (int i = chain->start_line - 1; i <= chain->end_line - 1; i++) {
+            write(pipe_to_sub[1], csv_lines[i], strlen(csv_lines[i]));
+        }
+        
+        close(pipe_to_sub[1]);
+        close(pipe_to_sub[0]);
+        close(pipe_from_sub[1]);
+
+        char buf[MAX_LINE_SIZE];
+        int n;
+        while ((n = read(pipe_from_sub[0], buf, sizeof(buf))) > 0) {
+            write(STDOUT_FILENO, buf, n);
+        }
+        close(pipe_from_sub[0]);
+
+        waitpid(child, NULL, 0);
+
+        return;
+    }
+    
     int pipe_feed[2];
     int pipe_out[2];
     int pipes[MAX_OPERATORS][2]; 
