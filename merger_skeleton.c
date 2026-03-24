@@ -210,7 +210,13 @@ int main(int argc, char **argv) {
 
     char filepath[512];
     snprintf(filepath, sizeof(filepath), "tests/%s", root->filename);
-    FILE *f = fopen(filepath, "r");
+    FILE *f = NULL;
+
+    if (strcmp(root->filename, "__sub__") != 0) {
+        f = fopen(root->filename, "r");
+    } else {
+        f = stdin;
+    }
 
     if (!f) {
         fprintf(stderr, "cannot open file\n");
