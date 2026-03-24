@@ -46,6 +46,7 @@ void build_args(operator_t *op, char **args) {
 }
 
 void write_spec(merger_node_t *node, int fd) {
+    dprintf(fd, "stdin %d\n", node->num_chains);
     dprintf(fd, "%d\n", node->num_chains);
     for(int i = 0; i < node->num_chains; i++) {
         operator_chain_t *chain = &node->chains[i]; 
@@ -209,13 +210,17 @@ int main(int argc, char **argv) {
 
     char filepath[512];
     snprintf(filepath, sizeof(filepath), "./tests/%s", root->filename);
-    FILE *f = fopen(filepath, "r");
 
-    if (!f) {
-        fprintf(stderr, "cannot open file\n");
-        return 1;
+    FILE *f = NULL;
+    if (strcmp(root->filename, "stdin") == 0) {
+        f = stdin;
+    } else {
+        f = fopen(filepath, "r");
+        if (!f) {
+            fprintf(stderr, "cannot open file\n");
+            return 1;
+        }
     }
-
     char *lines[MAX_LINES];
     int total = 0;
 
