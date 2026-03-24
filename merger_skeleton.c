@@ -208,7 +208,7 @@ int main(int argc, char **argv) {
     }
 
     char filepath[512];
-    snprintf(filepath, sizeof(filepath), "tests/%s", root->filename);
+    snprintf(filepath, sizeof(filepath), "./tests/%s", root->filename);
     FILE *f = fopen(filepath, "r");
 
     if (!f) {
