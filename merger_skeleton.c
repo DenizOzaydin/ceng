@@ -233,7 +233,9 @@ int main(int argc, char **argv) {
         total++;
     }
 
-    fclose(f);
+    if (f != stdin) {
+        fclose(f);
+    }
 
     pid_t exit_pids[MAX_OPERATORS * MAX_CHAINS];
     int exit_statuses[MAX_OPERATORS * MAX_CHAINS];
