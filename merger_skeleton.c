@@ -78,32 +78,32 @@ void run_chain(operator_chain_t *chain, char **csv_lines, int num_lines, pid_t *
         PIPE(pipe_from_sub);
 
         pid_t child = fork();
-
-        if(child == 0) {
+        if (child == 0) {
             dup2(pipe_to_sub[0], STDIN_FILENO);
             dup2(pipe_from_sub[1], STDOUT_FILENO);
-
             close(pipe_to_sub[0]);
             close(pipe_to_sub[1]);
             close(pipe_from_sub[0]);
             close(pipe_from_sub[1]);
-
             char *args[] = {"merger", NULL};
             execvp("merger", args);
-
-            fprintf(stderr, "execvp merger failed\n"); 
             exit(1);
         }
 
-        write_spec(chain->merger_child, pipe_to_sub[1]);
-
-        for (int i = chain->start_line - 1; i <= chain->end_line - 1; i++) {
-            write(pipe_to_sub[1], csv_lines[i], strlen(csv_lines[i]));
-        }
-
-        close(pipe_to_sub[1]);
         close(pipe_to_sub[0]);
         close(pipe_from_sub[1]);
+
+        pid_t helper = fork();
+        if (helper == 0) {
+            write_spec(chain->merger_child, pipe_to_sub[1]);
+            for (int i = chain->start_line - 1; i <= chain->end_line - 1; i++) {
+                write(pipe_to_sub[1], csv_lines[i], strlen(csv_lines[i]));
+            }
+            close(pipe_to_sub[1]);
+            exit(0);
+        } else {
+            close(pipe_to_sub[1]);
+        }
 
         char buf[MAX_LINE_SIZE];
         int n;
@@ -112,6 +112,7 @@ void run_chain(operator_chain_t *chain, char **csv_lines, int num_lines, pid_t *
         }
         close(pipe_from_sub[0]);
 
+        waitpid(helper, NULL, 0);
         waitpid(child, NULL, 0);
 
         return;
