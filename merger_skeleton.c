@@ -90,6 +90,8 @@ void run_chain(operator_chain_t *chain, char **csv_lines, int num_lines, pid_t *
 
             char *args[] = {"merger", NULL};
             execvp("merger", args);
+
+            fprintf(stderr, "execvp merger failed\n"); 
             exit(1);
         }
 
