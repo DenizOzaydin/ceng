@@ -46,7 +46,6 @@ void build_args(operator_t *op, char **args) {
 }
 
 void write_spec(merger_node_t *node, int fd) {
-    dprintf(fd, "__sub__ %d\n", node->num_chains);
     dprintf(fd, "%d\n", node->num_chains);
     for(int i = 0; i < node->num_chains; i++) {
         operator_chain_t *chain = &node->chains[i]; 
@@ -64,8 +63,8 @@ void write_spec(merger_node_t *node, int fd) {
                 if (j < chain->num_ops - 1) {
                     dprintf(fd, " |");
                 }
-                dprintf(fd, "\n");
             }
+            dprintf(fd, "\n");
         }
     }
 }
@@ -210,13 +209,7 @@ int main(int argc, char **argv) {
 
     char filepath[512];
     snprintf(filepath, sizeof(filepath), "tests/%s", root->filename);
-    FILE *f = NULL;
-
-    if (strcmp(root->filename, "__sub__") != 0) {
-        f = fopen(filepath, "r");
-    } else {
-        f = stdin;
-    }
+    FILE *f = fopen(filepath, "r");
 
     if (!f) {
         fprintf(stderr, "cannot open file\n");
