@@ -138,8 +138,9 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    fprintf(stderr, "trying to open: '%s'\n", root->filename);
-    FILE *f = fopen(root->filename, "r");
+    char filepath[512];
+    snprintf(filepath, sizeof(filepath), "tests/%s", root->filename);
+    FILE *f = fopen(filepath, "r");
 
     if (!f) {
         fprintf(stderr, "cannot open file\n");
