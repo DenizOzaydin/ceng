@@ -46,6 +46,7 @@ void build_args(operator_t *op, char **args) {
 }
 
 void write_spec(merger_node_t *node, int fd) {
+    dprintf(fd, "__sub__ %d\n", node->num_chains);
     dprintf(fd, "%d\n", node->num_chains);
     for(int i = 0; i < node->num_chains; i++) {
         operator_chain_t *chain = &node->chains[i]; 
@@ -98,7 +99,7 @@ void run_chain(operator_chain_t *chain, char **csv_lines, int num_lines, pid_t *
         for (int i = chain->start_line - 1; i <= chain->end_line - 1; i++) {
             write(pipe_to_sub[1], csv_lines[i], strlen(csv_lines[i]));
         }
-        
+
         close(pipe_to_sub[1]);
         close(pipe_to_sub[0]);
         close(pipe_from_sub[1]);
