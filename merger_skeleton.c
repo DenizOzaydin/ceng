@@ -213,7 +213,7 @@ int main(int argc, char **argv) {
     FILE *f = NULL;
 
     if (strcmp(root->filename, "__sub__") != 0) {
-        f = fopen(root->filename, "r");
+        f = fopen(filepath, "r");
     } else {
         f = stdin;
     }
